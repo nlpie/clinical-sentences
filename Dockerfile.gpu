@@ -1,0 +1,10 @@
+FROM nvcr.io/nvidia/tensorflow:18.10-py3
+
+ADD . /biomedicus
+WORKDIR /biomedicus
+
+RUN pip install --upgrade pip setuptools-scm
+
+RUN pip install .
+
+WORKDIR /biomedicus_data/

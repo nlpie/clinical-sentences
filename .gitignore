@@ -1,0 +1,14 @@
+*.DS_Store
+*.pyc
+*.swp
+temp/*
+dist/*
+build/*
+tags
+*.egg-info
+
+.coverage
+.cache
+.pytest_cache
+
+.idea
