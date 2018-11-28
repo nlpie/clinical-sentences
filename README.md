@@ -3,9 +3,9 @@
 Sentence detection for clinical notes.
 
 # Usage
-
+```
 pip install .[tf]
-
+```
 
 Training and evaluation expects .labels/.txt file pairs where .labels is a file with lines of tokens 
 in space separated format as shown below, and .txt is the plain text of the document.
