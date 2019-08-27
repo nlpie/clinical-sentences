@@ -28,28 +28,9 @@ is used for identifiers.
 
 token text is not used by the training or evaluation.  
 
-## Training deep network models
+## Sentence Detector
 
-~~~
-python -m biomedicus.sentences.deep train -j [job dir] -d [vocab dir] -e [word embeddings file] \
--i [training data folder] --config-file [output config file] --[other hparams]
-~~~
-
-## Evaluating
-
-~~~
-python -m biomedicus.sentences.deep evaluate -j [job dir] -d [vocab dir] -e [word embeddings file] \
--i [evaluation data folder] --weights-file [trained weights file] \
---config-file [existing config file]
-~~~
-
-## Ensemble network
-
-~~~
-python -m "biomedicus.sentences.boost" train -j [job dir] -d [vocab dir] \
--e [word embeddings file] -i [training data folder] --weights-file-a [pre-trained model] \
---config-file [config file] --[other hparams]
-~~~
+The sentence detector code is found in biomedicus/sentences/models.py  
 
 # Resources
 

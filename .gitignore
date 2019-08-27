@@ -10,5 +10,5 @@ tags
 .coverage
 .cache
 .pytest_cache
-
+.venv
 .idea

@@ -1,13 +1,25 @@
-from __future__ import absolute_import
-
+# Copyright 2019 Regents of the University of Minnesota.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 import os
-import re
 from abc import abstractmethod, ABC
-from typing import Optional, AnyStr, Iterable, Tuple, List
 
 import numpy as np
+import pathlib
+import re
+from typing import Optional, AnyStr, Iterable, Tuple, List
 
-from ..tokenization import Token, detect_space_after
+from biomedicus.tokenization import Token, detect_space_after
 
 
 class Vocabulary(object):
@@ -49,15 +61,15 @@ class Vocabulary(object):
         }
         self._word_vectors = None
 
-        from tensorflow.python.lib.io.file_io import FileIO
-        with FileIO(os.path.join(directory, 'characters.txt'), 'r') as f:
+        import tensorflow as tf
+        with tf.io.gfile.GFile(os.path.join(directory, 'characters.txt'), 'r') as f:
             for char in f:
                 self._character_to_id[char[:-1]] = len(self._character_to_id)
             self.characters = len(self._character_to_id)
 
         if words_model_file is not None:
             self._word_vectors = []
-            with FileIO(words_model_file, 'r') as f:
+            with tf.io.gfile.GFile(words_model_file, 'r') as f:
                 for line in f:
                     split = line.split()
                     if len(split) == 2:
@@ -71,7 +83,7 @@ class Vocabulary(object):
             self._word_vectors = np.vstack(self._word_vectors)
             self.words = self._word_vectors.shape[0]
         elif words_list is not None:
-            with FileIO(words_list, 'r') as f:
+            with tf.io.gfile.GFile(words_list, 'r') as f:
                 for identifier, line in enumerate(f, 1):
                     self._word_to_id[line[:-1]] = identifier
             self.words = len(self._word_to_id)
@@ -189,28 +201,24 @@ def _split_token_line(txt: AnyStr, line: Optional[str]) -> Optional[Token]:
 def directory_labels_generator(directory: AnyStr,
                                repeat=False,
                                return_name=False) -> Iterable[Tuple[AnyStr, List[Token]]]:
-    """Generates text, list of tokens tuples a directory containing text and labels files. The
-    labels files for each text document should contain one token on each line with the format
-    [segment] [begin_index] [end_index] [label] [1 if identifier, 0 if not]
-
-    :param directory: The directory to read the text and labels documents from
-    :param repeat:
-    :return:
-    """
-    from tensorflow.python.lib.io import file_io
-    from tensorflow.python.lib.io.file_io import FileIO
+    import tensorflow as tf
     while True:
-        for doc in file_io.get_matching_files(os.path.join(directory, '*.txt')):
-            print("reading document {}".format(doc))
-            with FileIO(doc, 'r') as f:
-                txt = f.read()
+        for doc_dir, _, docs in tf.io.gfile.walk(directory):
+            for doc in docs:
+                if not doc.endswith('.txt'):
+                    continue
+                path = pathlib.PurePath(doc_dir, doc)
+                print("reading document {}".format(path))
+                with tf.io.gfile.GFile(str(path), 'r') as f:
+                    txt = f.read()
 
-            with FileIO(doc.replace('.txt', '.labels'), 'r') as f:
-                tokens = [_split_token_line(txt, x) for x in f]
-            if return_name:
-                yield txt, doc.split('/')[-1], tokens
-            else:
-                yield txt, tokens
+                labels_path = path.with_suffix('.labels')
+                with tf.io.gfile.GFile(str(labels_path), 'r') as f:
+                    tokens = [_split_token_line(txt, x) for x in f]
+                if return_name:
+                    yield txt, doc, tokens
+                else:
+                    yield txt, tokens
 
         if not repeat:
             break
@@ -220,6 +228,7 @@ class TokenSequenceGenerator(ABC, Iterable):
     """Abstract base class for transforming an iterable of document-tokens into data
     usable by a classifier.
     """
+
     def __init__(
             self,
             input_source: Iterable[Tuple[AnyStr, List[Token]]],
