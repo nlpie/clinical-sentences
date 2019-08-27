@@ -36,3 +36,7 @@ The sentence detector code is found in biomedicus/sentences/models.py
 
 Annotated corpora, word embeddings, and trained models from the MIMIC corpus will be posted to 
 physionet.org
+
+# Documentation
+
+Annotation guidelines, paper and ppt for Medinfo 2019 presentation are in doc/.
